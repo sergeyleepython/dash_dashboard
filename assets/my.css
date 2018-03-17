@@ -1,0 +1,8 @@
+.logo {
+    /*background-image: url("/images/logo.png") !important;*/
+    background-color: blue;
+}
+
+label {
+    font-size: 15pt;
+}
