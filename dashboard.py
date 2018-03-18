@@ -1,4 +1,5 @@
 import base64
+from random import randint
 
 import dash
 from dash.dependencies import Input, Output, Event
@@ -10,13 +11,24 @@ COMPANY_NAME = 'MARTLET SOFTWARE'
 VEHICLES = ['SUV1', 'SUV2', 'Truck1']
 SUBASSIES_STRUCTURE = {
     'BRAKING SYSTEM': {
-        'FL_element': {'sensors': ['Vibration FL'], 'health': 100},
-        'FR_element': {'sensors': ['Vibration FR'], 'health': 100},
-        'RL_element': {'sensors': ['Vibration RL'], 'health': 100},
-        'RR_element': {'sensors': ['Vibration RR'], 'health': 100},
+        'Brake Booster': {'sensors': ['Brake Pressure']},
+        'FL_element': {'sensors': ['Vibration FL', 'Temperature FL', 'ABS FL']},
+        'FR_element': {'sensors': ['Vibration FR', 'Temperature FR', 'ABS FR']},
+        'RL_element': {'sensors': ['Vibration RL', 'Temperature RL', 'ABS RL']},
+        'RR_element': {'sensors': ['Vibration RR', 'Temperature RR', 'ABS RR']},
     },
     'ELECTRIC SYSTEM': {
-        'Battery': {'sensors': ['Voltage'], 'health': 100}
+        'Battery': {'sensors': ['Voltage']},
+        'Alternator': {'sensors': ['Output Voltage', 'Output Current']},
+        'FL Headlight': {'sensors': ['Resistance FL Light']},
+        'FR Headlight': {'sensors': ['Resistance FR Light']},
+        'RL Headlight': {'sensors': ['Resistance RL Light']},
+        'RR Headlight': {'sensors': ['Resistance RR Light']},
+    },
+    'TRANSMISSION': {
+        'Gear selector': {'sensors': ['Gear Position']},
+        'Oil': {'sensors': ['Oil Pressure', 'Oil Temperature', 'Oil Level']},
+        'Shafts': {'sensors': ['Shafts Rotational Speed']}
     }
 }
 SUBASSIES = list(SUBASSIES_STRUCTURE.keys())
@@ -64,6 +76,7 @@ app.layout = html.Div([
         html.Label('Element'),
         dcc.Checklist(
             id='element-checklist',
+            # !!!!!!!!!!!!!1
             options=[{'label': s, 'value': s} for s in SUBASSIES_STRUCTURE[SUBASSIES[0]].keys()],
             values=list(SUBASSIES_STRUCTURE[SUBASSIES[0]].keys())
         ),
@@ -76,11 +89,11 @@ app.layout = html.Div([
                      ),
     ], className='row'),
     html.Hr(),
-    html.Div(children=html.Div(id='graphs'),
-             className='row',
+    html.Div(children=html.Div(id='graphs'), className='row',
              # style={'columnCount': 2}
              ),
     dcc.Interval(id='graph-update', interval=5000),
+    dcc.Interval(id='health-update', interval=5000)
 ], className="container",
     # style={'width': '98%', 'margin-left': 10, 'margin-right': 10, 'max-width': 50000}
 )
@@ -91,9 +104,21 @@ def update_vehicle(selected_dropdown_value):
     return selected_dropdown_value
 
 
-@app.callback(Output('element-checklist', 'options'), [Input('subassies-radioitems', 'value')])
-def update_elements_options(subassy_name):
-    options = [{'label': s, 'value': s} for s in SUBASSIES_STRUCTURE[subassy_name].keys()]
+def get_health(subassy, elements_list):
+    # dummy data
+    healths = [randint(50, 100) for i in range(len(elements_list))]
+    return healths
+
+
+@app.callback(Output('element-checklist', 'options'), [Input('subassies-radioitems', 'value'),
+                                                       ],
+              events=[Event('health-update', 'interval'
+                            )])
+def update_health(subassy):
+    elements_list = SUBASSIES_STRUCTURE[subassy].keys()
+    options = [{'label': '{}: {}%'.format(s, health), 'value': s}
+               for s, health in zip(elements_list,
+                                    get_health(subassy, elements_list))]
     return options
 
 
@@ -116,6 +141,7 @@ def update_sensors_values(subassy, elements_list):
 
 
 def get_sensor_data(sensor_name):
+    # dummy data
     data = {"2018-01-01 01:01": 2.2,
             "2018-01-01 01:02": 2.1,
             "2018-01-01 01:03": 3.1
