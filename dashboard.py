@@ -8,11 +8,28 @@ import plotly.graph_objs as go
 
 COMPANY_NAME = 'MARTLET SOFTWARE'
 VEHICLES = ['SUV1', 'SUV2', 'Truck1']
-SUBASSIES_SENSORS = {
-    'BRAKING SYSTEM': ['Vibration FL', 'Vibration FR', 'Vibration RL', 'Vibration RR'],
-    'ELECTRIC SYSTEM': ['Battery Voltage']
+SUBASSIES_STRUCTURE = {
+    'BRAKING SYSTEM': {
+        'FL_element': {'sensors': ['Vibration FL'], 'health': 100},
+        'FR_element': {'sensors': ['Vibration FR'], 'health': 100},
+        'RL_element': {'sensors': ['Vibration RL'], 'health': 100},
+        'RR_element': {'sensors': ['Vibration RR'], 'health': 100},
+    },
+    'ELECTRIC SYSTEM': {
+        'Battery': {'sensors': ['Voltage'], 'health': 100}
+    }
 }
-SUBASSIES = list(SUBASSIES_SENSORS.keys())
+SUBASSIES = list(SUBASSIES_STRUCTURE.keys())
+
+
+def get_subassy_sensors(subassy, elements=None):
+    subassy = SUBASSIES_STRUCTURE[subassy]
+    sensors = []
+    for name, data in subassy.items():
+        if elements is None or name in elements:
+            sensors = sensors + data['sensors']
+    return sensors
+
 
 app = dash.Dash('vehicle-data', static_folder='assets')
 app.title = COMPANY_NAME
@@ -44,9 +61,16 @@ app.layout = html.Div([
             value=SUBASSIES[0]
         ),
         html.Hr(),
+        html.Label('Element'),
+        dcc.Checklist(
+            id='element-checklist',
+            options=[{'label': s, 'value': s} for s in SUBASSIES_STRUCTURE[SUBASSIES[0]].keys()],
+            values=list(SUBASSIES_STRUCTURE[SUBASSIES[0]].keys())
+        ),
+        html.Hr(),
         html.Label('Sensors'),
         dcc.Dropdown(id='sensors-dropdown',
-                     options=[{'label': s, 'value': s} for s in SUBASSIES_SENSORS[SUBASSIES[0]]],
+                     options=[{'label': s, 'value': s} for s in get_subassy_sensors(SUBASSIES[0])],
                      value=[],
                      multi=True
                      ),
@@ -67,15 +91,28 @@ def update_vehicle(selected_dropdown_value):
     return selected_dropdown_value
 
 
-@app.callback(Output('sensors-dropdown', 'options'), [Input('subassies-radioitems', 'value')])
-def update_subassy(selected_value):
-    options = [{'label': s, 'value': s} for s in SUBASSIES_SENSORS[selected_value]]
+@app.callback(Output('element-checklist', 'options'), [Input('subassies-radioitems', 'value')])
+def update_elements_options(subassy_name):
+    options = [{'label': s, 'value': s} for s in SUBASSIES_STRUCTURE[subassy_name].keys()]
     return options
 
 
-@app.callback(Output('sensors-dropdown', 'value'), [Input('subassies-radioitems', 'value')])
-def update_subassy(selected_value):
-    return SUBASSIES_SENSORS[selected_value]
+@app.callback(Output('element-checklist', 'values'), [Input('subassies-radioitems', 'value')])
+def update_elements_values(subassy_name):
+    return list(SUBASSIES_STRUCTURE[subassy_name].keys())
+
+
+@app.callback(Output('sensors-dropdown', 'options'), [Input('subassies-radioitems', 'value'),
+                                                      Input('element-checklist', 'values')])
+def update_sensors_options(subassy, elements_list):
+    options = [{'label': s, 'value': s} for s in get_subassy_sensors(subassy, elements_list)]
+    return options
+
+
+@app.callback(Output('sensors-dropdown', 'value'), [Input('subassies-radioitems', 'value'),
+                                                    Input('element-checklist', 'values')])
+def update_sensors_values(subassy, elements_list):
+    return get_subassy_sensors(subassy, elements_list)
 
 
 def get_sensor_data(sensor_name):
