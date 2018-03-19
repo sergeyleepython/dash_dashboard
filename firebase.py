@@ -1,10 +1,13 @@
 import pyrebase
 
+from local_settings import *
+
+# use your credentials here
 config = {
-    "apiKey": "AIzaSyDdmlolGTVHtLn9uajIvp_H8lJIQarppxo",
-    "authDomain": "helloudacity-1195.firebaseapp.com",
-    "databaseURL": "https://helloudacity-1195.firebaseio.com/",
-    "storageBucket": "helloudacity-1195.appspot.com"
+    "apiKey": apiKey,
+    "authDomain": authDomain,
+    "databaseURL": databaseURL,
+    "storageBucket": storageBucket
 }
 
 firebase = pyrebase.initialize_app(config)
