@@ -22,7 +22,7 @@ MarkupSafe==1.0
 nbformat==4.4.0
 oauth2client==3.0.0
 plotly==2.5.0
-protobuf==3.5.2
+protobuf==3.18.3
 pyasn1==0.4.2
 pyasn1-modules==0.2.1
 pycryptodome==3.4.3
